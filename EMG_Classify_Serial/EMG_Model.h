@@ -7,21 +7,37 @@
 // Feature order: MAV_ch1_norm, MAV_ch2_norm, RMS_ch1_norm, RMS_ch2_norm, WL_ch1_norm, WL_ch2_norm, MAV_diff, RMS_diff, WL_diff, MAV_sum, RMS_sum, WL_sum, MAV_balance, RMS_balance, WL_balance
 
 int predictEMG(float *x) {
-    if (x[11] <= 0.179981017f) {
-        return 2;
-    } else {
-        if (x[12] <= -0.01621893141f) {
-            return 1;
-        } else {
-            if (x[8] <= -0.04715042002f) {
-                if (x[3] <= 0.7052450478f) {
+    if (x[11] <= 0.9450104535f) {
+        if (x[9] <= 0.2115424052f) {
+            if (x[8] <= -0.006055320613f) {
+                return 1;
+            } else {
+                if (x[6] <= -0.003174275975f) {
                     return 1;
                 } else {
-                    return 0;
+                    if (x[13] <= -0.3001067415f) {
+                        return 2;
+                    } else {
+                        return 2;
+                    }
+                }
+            }
+        } else {
+            if (x[11] <= 0.4756291658f) {
+                if (x[12] <= 0.009830141906f) {
+                    if (x[1] <= 0.1408207342f) {
+                        return 1;
+                    } else {
+                        return 1;
+                    }
+                } else {
+                    return 2;
                 }
             } else {
-                return 0;
+                return 2;
             }
         }
+    } else {
+        return 0;
     }
 }

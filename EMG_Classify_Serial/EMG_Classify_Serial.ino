@@ -49,8 +49,8 @@ const int VOTE_WINDOW_SIZE = 9;
 const int VOTE_MIN_COUNT = 5;
 const float NORMALIZATION_MIN_DENOM = 0.001f;
 const float BALANCE_EPSILON = 0.001f;
-const float NORMALIZATION_REST[RAW_FEATURE_COUNT] = { 21.405f, 21.425f, 27.26554602f, 27.2797544f, 2791.0f, 2786.0f };
-const float NORMALIZATION_CALIB[RAW_FEATURE_COUNT] = { 597.597f, 585.375f, 1191.212029f, 1190.935248f, 112342.0f, 111811.75f };
+const float NORMALIZATION_REST[RAW_FEATURE_COUNT] = { 1316.765f, 1298.8f, 1665.504562f, 1653.239925f, 202662.0f, 198831.0f };
+const float NORMALIZATION_CALIB[RAW_FEATURE_COUNT] = { 5417.389f, 5391.255f, 6444.981968f, 6449.533278f, 738437.2f, 736525.4f };
 
 static long ThresholdInside = 0;
 static long ThresholdOutside = 0;
@@ -71,22 +71,38 @@ int labelsInHistory = 0;
 int stableLabel = 2;
 
 int predictEMG(float *x) {
-    if (x[11] <= 0.179981017f) {
-        return 2;
-    } else {
-        if (x[12] <= -0.01621893141f) {
-            return 1;
-        } else {
-            if (x[8] <= -0.04715042002f) {
-                if (x[3] <= 0.7052450478f) {
+    if (x[11] <= 0.9450104535f) {
+        if (x[9] <= 0.2115424052f) {
+            if (x[8] <= -0.006055320613f) {
+                return 1;
+            } else {
+                if (x[6] <= -0.003174275975f) {
                     return 1;
                 } else {
-                    return 0;
+                    if (x[13] <= -0.3001067415f) {
+                        return 2;
+                    } else {
+                        return 2;
+                    }
+                }
+            }
+        } else {
+            if (x[11] <= 0.4756291658f) {
+                if (x[12] <= 0.009830141906f) {
+                    if (x[1] <= 0.1408207342f) {
+                        return 1;
+                    } else {
+                        return 1;
+                    }
+                } else {
+                    return 2;
                 }
             } else {
-                return 0;
+                return 2;
             }
         }
+    } else {
+        return 0;
     }
 }
 
