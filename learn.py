@@ -10,8 +10,6 @@ STEP_MS = 50
 
 WINDOW_SIZE = SAMPLE_RATE_HZ * WINDOW_MS // 1000
 STEP_SIZE = SAMPLE_RATE_HZ * STEP_MS // 1000
-RAW_FEATURE_COUNT = 6
-NORMALIZATION_MIN_DENOM = 0.001
 BALANCE_EPSILON = 0.001
 
 ROCK_LABEL = 0   # jwieot-eul ttae
@@ -47,17 +45,14 @@ def raw_window_features(window):
     return np.concatenate([mav, rms, wl])
 
 
-def normalized_features(raw_X, rest_values, calib_values):
-    denom = np.maximum(calib_values - rest_values, NORMALIZATION_MIN_DENOM)
-    normalized = np.maximum((raw_X - rest_values) / denom, 0.0)
+def engineered_features(raw_X):
+    mav_diff = raw_X[:, 0] - raw_X[:, 1]
+    rms_diff = raw_X[:, 2] - raw_X[:, 3]
+    wl_diff = raw_X[:, 4] - raw_X[:, 5]
 
-    mav_diff = normalized[:, 0] - normalized[:, 1]
-    rms_diff = normalized[:, 2] - normalized[:, 3]
-    wl_diff = normalized[:, 4] - normalized[:, 5]
-
-    mav_sum = normalized[:, 0] + normalized[:, 1]
-    rms_sum = normalized[:, 2] + normalized[:, 3]
-    wl_sum = normalized[:, 4] + normalized[:, 5]
+    mav_sum = raw_X[:, 0] + raw_X[:, 1]
+    rms_sum = raw_X[:, 2] + raw_X[:, 3]
+    wl_sum = raw_X[:, 4] + raw_X[:, 5]
 
     relation_features = np.column_stack([
         mav_diff,
@@ -71,7 +66,7 @@ def normalized_features(raw_X, rest_values, calib_values):
         wl_diff / (wl_sum + BALANCE_EPSILON),
     ])
 
-    return np.column_stack([normalized, relation_features])
+    return np.column_stack([raw_X, relation_features])
 
 
 def make_raw_dataset(path, label):
@@ -107,12 +102,12 @@ def train_test_split_by_class(X, y, train_ratio=0.8):
 def feature_names(channel_count):
     if channel_count == 2:
         return [
-            "MAV_ch1_norm",
-            "MAV_ch2_norm",
-            "RMS_ch1_norm",
-            "RMS_ch2_norm",
-            "WL_ch1_norm",
-            "WL_ch2_norm",
+            "MAV_ch1",
+            "MAV_ch2",
+            "RMS_ch1",
+            "RMS_ch2",
+            "WL_ch1",
+            "WL_ch2",
             "MAV_diff",
             "RMS_diff",
             "WL_diff",
@@ -127,7 +122,7 @@ def feature_names(channel_count):
     names = []
     for metric in ("MAV", "RMS", "WL"):
         for channel in range(channel_count):
-            names.append(f"{metric}_ch{channel + 1}_norm")
+            names.append(f"{metric}_ch{channel + 1}")
     return names
 
 
@@ -140,11 +135,7 @@ def main():
 
     raw_X = np.vstack([class_raw_X for class_raw_X, _ in datasets])
     y = np.concatenate([class_y for _, class_y in datasets])
-    rest_X = raw_X[y == NONE_LABEL]
-    rest_values = np.percentile(rest_X, 50, axis=0)
-    calib_values = np.percentile(raw_X, 95, axis=0)
-    calib_values = np.maximum(calib_values, rest_values + NORMALIZATION_MIN_DENOM)
-    X = normalized_features(raw_X, rest_values, calib_values)
+    X = engineered_features(raw_X)
 
     X_train, X_test, y_train, y_test = train_test_split_by_class(X, y)
 
@@ -155,8 +146,6 @@ def main():
     print(f"Window: {WINDOW_MS} ms ({WINDOW_SIZE} samples)")
     print(f"Step: {STEP_MS} ms ({STEP_SIZE} samples)")
     print(f"Features: {', '.join(names)}")
-    print("Normalization rest:", ", ".join(f"{value:.10g}" for value in rest_values))
-    print("Normalization calib:", ", ".join(f"{value:.10g}" for value in calib_values))
     print(f"Train windows: {len(X_train)}, Test windows: {len(X_test)}")
 
     clf = DecisionTreeClassifier(max_depth=5, random_state=42)

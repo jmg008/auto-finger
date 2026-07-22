@@ -13,7 +13,6 @@ SAMPLE_RATE_HZ = 1000
 WINDOW_MS = 200
 STEP_MS = 50
 RAW_FEATURE_COUNT = 6
-NORMALIZATION_MIN_DENOM = 0.001
 BALANCE_EPSILON = 0.001
 
 CLASSES = [
@@ -28,7 +27,6 @@ LABEL_NAMES = {
     2: "none",
 }
 
-LABEL_NAMES_INV = {name: label for label, name in LABEL_NAMES.items()}
 CLASS_LABELS = sorted(LABEL_NAMES)
 
 
@@ -90,7 +88,7 @@ COLLECT_ORDER = [
 ]
 
 
-def parse_args():
+def build_arg_parser():
     parser = argparse.ArgumentParser(
         description="Collect EMG serial data, train a decision tree, and update Arduino code."
     )
@@ -120,7 +118,11 @@ def parse_args():
     parser.add_argument("--no-sensor-upload", action="store_true", help="Do not upload the raw sensor sketch")
     parser.add_argument("--no-classify-upload", action="store_true", help="Do not upload the classifier sketch")
     parser.add_argument("--upload-wait", type=float, default=2.0, help="Seconds to wait after each upload")
-    return parser.parse_args()
+    return parser
+
+
+def parse_args():
+    return build_arg_parser().parse_args()
 
 
 def run_command(command, cwd=None):
@@ -205,8 +207,22 @@ def parse_sensor_line(raw_line):
         return None
 
 
-def collect_one_class(ser, name, out_path, seconds, settle, append=False, set_index=1, set_count=1):
-    input(f"\nPrepare '{name}' ({set_index}/{set_count}), then press Enter to collect.")
+def collect_one_class(
+    ser,
+    name,
+    out_path,
+    seconds,
+    settle,
+    append=False,
+    set_index=1,
+    set_count=1,
+    before_collect=None,
+):
+    if before_collect is None:
+        input(f"\nPrepare '{name}' ({set_index}/{set_count}), then press Enter to collect.")
+    else:
+        before_collect(name, set_index, set_count)
+
     ser.reset_input_buffer()
 
     if settle > 0:
@@ -242,7 +258,7 @@ def collect_one_class(ser, name, out_path, seconds, settle, append=False, set_in
     print(f"{action} {len(rows)} samples to {out_path}")
 
 
-def collect_data(args):
+def collect_data(args, before_collect=None):
     try:
         import serial
     except ImportError as exc:
@@ -269,6 +285,7 @@ def collect_data(args):
                     append=path in written_files,
                     set_index=set_index,
                     set_count=args.sets,
+                    before_collect=before_collect,
                 )
                 written_files.add(path)
 
@@ -295,32 +312,17 @@ def raw_window_features(window):
     return np.concatenate([mav, rms, wl])
 
 
-def compute_normalization_params(raw_X, y):
-    rest_X = raw_X[y == LABEL_NAMES_INV["none"]]
-    if len(rest_X) == 0:
-        raise ValueError("none class data is required to compute rest normalization values")
+def engineered_features(raw_X):
+    if raw_X.shape[1] != RAW_FEATURE_COUNT:
+        return raw_X
 
-    rest_values = np.percentile(rest_X, 50, axis=0)
-    calib_values = np.percentile(raw_X, 95, axis=0)
-    calib_values = np.maximum(calib_values, rest_values + NORMALIZATION_MIN_DENOM)
-    return rest_values, calib_values
+    mav_diff = raw_X[:, 0] - raw_X[:, 1]
+    rms_diff = raw_X[:, 2] - raw_X[:, 3]
+    wl_diff = raw_X[:, 4] - raw_X[:, 5]
 
-
-def normalized_features(raw_X, rest_values, calib_values):
-    denom = np.maximum(calib_values - rest_values, NORMALIZATION_MIN_DENOM)
-    normalized = (raw_X - rest_values) / denom
-    normalized = np.maximum(normalized, 0.0)
-
-    if normalized.shape[1] != RAW_FEATURE_COUNT:
-        return normalized
-
-    mav_diff = normalized[:, 0] - normalized[:, 1]
-    rms_diff = normalized[:, 2] - normalized[:, 3]
-    wl_diff = normalized[:, 4] - normalized[:, 5]
-
-    mav_sum = normalized[:, 0] + normalized[:, 1]
-    rms_sum = normalized[:, 2] + normalized[:, 3]
-    wl_sum = normalized[:, 4] + normalized[:, 5]
+    mav_sum = raw_X[:, 0] + raw_X[:, 1]
+    rms_sum = raw_X[:, 2] + raw_X[:, 3]
+    wl_sum = raw_X[:, 4] + raw_X[:, 5]
 
     mav_balance = mav_diff / (mav_sum + BALANCE_EPSILON)
     rms_balance = rms_diff / (rms_sum + BALANCE_EPSILON)
@@ -338,7 +340,7 @@ def normalized_features(raw_X, rest_values, calib_values):
         wl_balance,
     ])
 
-    return np.column_stack([normalized, relation_features])
+    return np.column_stack([raw_X, relation_features])
 
 
 def make_raw_dataset(path, label, window_size, step_size):
@@ -357,12 +359,12 @@ def make_raw_dataset(path, label, window_size, step_size):
 def feature_names(channel_count):
     if channel_count == 2:
         return [
-            "MAV_ch1_norm",
-            "MAV_ch2_norm",
-            "RMS_ch1_norm",
-            "RMS_ch2_norm",
-            "WL_ch1_norm",
-            "WL_ch2_norm",
+            "MAV_ch1",
+            "MAV_ch2",
+            "RMS_ch1",
+            "RMS_ch2",
+            "WL_ch1",
+            "WL_ch2",
             "MAV_diff",
             "RMS_diff",
             "WL_diff",
@@ -377,7 +379,7 @@ def feature_names(channel_count):
     names = []
     for metric in ("MAV", "RMS", "WL"):
         for channel in range(channel_count):
-            names.append(f"{metric}_ch{channel + 1}_norm")
+            names.append(f"{metric}_ch{channel + 1}")
     return names
 
 
@@ -502,8 +504,7 @@ def train_model(args):
 
     raw_X = np.vstack([class_raw_X for class_raw_X, _ in datasets])
     y = np.concatenate([class_y for _, class_y in datasets])
-    rest_values, calib_values = compute_normalization_params(raw_X, y)
-    X = normalized_features(raw_X, rest_values, calib_values)
+    X = engineered_features(raw_X)
 
     X_train, X_test, y_train, y_test = train_test_split_by_class(
         X,
@@ -531,7 +532,7 @@ def train_model(args):
 
     channel_count = load_sensor_data(CLASSES[0][1], window_size).shape[1]
     names = feature_names(channel_count)
-    return final_clf, names, window_size, step_size, rest_values, calib_values
+    return final_clf, names, window_size, step_size
 
 
 def get_model_factory(max_depth):
@@ -554,10 +555,6 @@ def float_literal(value):
     if "." not in text and "e" not in text.lower():
         text += ".0"
     return f"{text}f"
-
-
-def float_array_literal(values):
-    return "{ " + ", ".join(float_literal(value) for value in values) + " }"
 
 
 def export_simple_node(node, indent="    "):
@@ -612,7 +609,6 @@ def export_header(predict_code, feature_names_text, window_size, step_size):
         "// Generated by calibrate_train_update.py",
         f"// Window samples: {window_size}",
         f"// Step samples: {step_size}",
-        "// Raw normalization: rest = none median, calib = overall 95th percentile",
         f"// Feature order: {feature_names_text}",
         "",
         predict_code.rstrip(),
@@ -643,16 +639,7 @@ def find_function_bounds(source, signature_pattern):
     raise RuntimeError("Could not find function closing brace")
 
 
-def replace_array_constant(source, name, values):
-    pattern = rf"const float {name}\[RAW_FEATURE_COUNT\] = \{{[^}}]*\}};"
-    replacement = f"const float {name}[RAW_FEATURE_COUNT] = {float_array_literal(values)};"
-    updated, count = re.subn(pattern, replacement, source)
-    if count != 1:
-        raise RuntimeError(f"Could not update {name} in the Arduino sketch")
-    return updated
-
-
-def replace_predict_function(ino_path, predict_code, window_size, step_size, rest_values, calib_values):
+def replace_predict_function(ino_path, predict_code, window_size, step_size):
     path = Path(ino_path)
     source = path.read_text(encoding="utf-8")
 
@@ -662,15 +649,12 @@ def replace_predict_function(ino_path, predict_code, window_size, step_size, res
     source = re.sub(r"const int WINDOW_SIZE = \d+;", f"const int WINDOW_SIZE = {window_size};", source)
     source = re.sub(r"const int STEP_SIZE = \d+;", f"const int STEP_SIZE = {step_size};", source)
     source = re.sub(r"const int FEATURE_COUNT = \d+;", "const int FEATURE_COUNT = 15;", source)
-    source = replace_array_constant(source, "NORMALIZATION_REST", rest_values)
-    source = replace_array_constant(source, "NORMALIZATION_CALIB", calib_values)
 
     path.write_text(source, encoding="utf-8")
     print(f"Updated {path}")
 
 
-def main():
-    args = parse_args()
+def run_pipeline(args, before_collect=None):
     if args.sets < 1:
         raise ValueError("--sets must be at least 1")
 
@@ -685,9 +669,9 @@ def main():
         if not args.no_upload and not args.no_sensor_upload:
             upload_sketch(args, args.sensor_sketch, "Raw sensor sketch")
 
-        collect_data(args)
+        collect_data(args, before_collect=before_collect)
 
-    clf, names, window_size, step_size, rest_values, calib_values = train_model(args)
+    clf, names, window_size, step_size = train_model(args)
     predict_code = export_predict_function(clf)
     feature_names_text = ", ".join(names)
 
@@ -697,7 +681,7 @@ def main():
     print(f"Updated {header_path}")
 
     ino_path = Path(args.ino)
-    replace_predict_function(ino_path, predict_code, window_size, step_size, rest_values, calib_values)
+    replace_predict_function(ino_path, predict_code, window_size, step_size)
 
     sketch_header_path = ino_path.parent / header_path.name
     if sketch_header_path.resolve() != header_path.resolve():
@@ -710,6 +694,10 @@ def main():
     print("\nDone.")
     print("Feature order:", feature_names_text)
     print("Labels: 0=rock, 1=paper, 2=none")
+
+
+def main():
+    run_pipeline(parse_args())
 
 
 if __name__ == "__main__":

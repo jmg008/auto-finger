@@ -7,12 +7,12 @@
  *   2 = none
  *
  * Feature order:
- *   x[0] = MAV_ch1_norm
- *   x[1] = MAV_ch2_norm
- *   x[2] = RMS_ch1_norm
- *   x[3] = RMS_ch2_norm
- *   x[4] = WL_ch1_norm
- *   x[5] = WL_ch2_norm
+ *   x[0] = MAV_ch1
+ *   x[1] = MAV_ch2
+ *   x[2] = RMS_ch1
+ *   x[3] = RMS_ch2
+ *   x[4] = WL_ch1
+ *   x[5] = WL_ch2
  *   x[6] = MAV_diff
  *   x[7] = RMS_diff
  *   x[8] = WL_diff
@@ -35,7 +35,9 @@
 
 #define SensorInputPin_Inside A0
 #define SensorInputPin_Outside A1
-#define ServoPin 2
+#define ServoPin1 2
+#define ServoPin2 3
+#define ServoPin3 4
 
 const int SAMPLE_RATE = SAMPLE_FREQ_1000HZ;
 const int HUM_FREQ = NOTCH_FREQ_60HZ;
@@ -43,21 +45,19 @@ const int HUM_FREQ = NOTCH_FREQ_60HZ;
 const unsigned long SAMPLE_PERIOD_US = 1000000UL / 1000UL;
 const int WINDOW_SIZE = 200;
 const int STEP_SIZE = 50;
-const int RAW_FEATURE_COUNT = 6;
 const int FEATURE_COUNT = 15;
 const int VOTE_WINDOW_SIZE = 9;
 const int VOTE_MIN_COUNT = 5;
-const float NORMALIZATION_MIN_DENOM = 0.001f;
 const float BALANCE_EPSILON = 0.001f;
-const float NORMALIZATION_REST[RAW_FEATURE_COUNT] = { 1316.765f, 1298.8f, 1665.504562f, 1653.239925f, 202662.0f, 198831.0f };
-const float NORMALIZATION_CALIB[RAW_FEATURE_COUNT] = { 5417.389f, 5391.255f, 6444.981968f, 6449.533278f, 738437.2f, 736525.4f };
 
 static long ThresholdInside = 0;
 static long ThresholdOutside = 0;
 
 EMGFilters filterInside;
 EMGFilters filterOutside;
-Servo fingerServo;
+Servo fingerServo1;
+Servo fingerServo2;
+Servo fingerServo3;
 
 uint16_t windowInside[WINDOW_SIZE];
 uint16_t windowOutside[WINDOW_SIZE];
@@ -71,38 +71,14 @@ int labelsInHistory = 0;
 int stableLabel = 2;
 
 int predictEMG(float *x) {
-    if (x[11] <= 0.9450104535f) {
-        if (x[9] <= 0.2115424052f) {
-            if (x[8] <= -0.006055320613f) {
-                return 1;
-            } else {
-                if (x[6] <= -0.003174275975f) {
-                    return 1;
-                } else {
-                    if (x[13] <= -0.3001067415f) {
-                        return 2;
-                    } else {
-                        return 2;
-                    }
-                }
-            }
-        } else {
-            if (x[11] <= 0.4756291658f) {
-                if (x[12] <= 0.009830141906f) {
-                    if (x[1] <= 0.1408207342f) {
-                        return 1;
-                    } else {
-                        return 1;
-                    }
-                } else {
-                    return 2;
-                }
-            } else {
-                return 2;
-            }
-        }
+    if (x[11] <= 21837.5f) {
+        return 2;
     } else {
-        return 0;
+        if (x[9] <= 733.2149963f) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 }
 
@@ -136,7 +112,9 @@ void updateServo(int label) {
     int angle = servoAngleForLabel(label);
 
     if (angle != lastServoAngle) {
-        fingerServo.write(angle);
+        fingerServo1.write(angle);
+        fingerServo2.write(180-angle);
+        fingerServo3.write(angle);
         lastServoAngle = angle;
     }
 }
@@ -171,20 +149,6 @@ int smoothLabel(int label) {
     }
 
     return stableLabel;
-}
-
-float normalizeFeature(float value, int index) {
-    float denom = NORMALIZATION_CALIB[index] - NORMALIZATION_REST[index];
-    if (denom < NORMALIZATION_MIN_DENOM) {
-        denom = NORMALIZATION_MIN_DENOM;
-    }
-
-    float normalized = (value - NORMALIZATION_REST[index]) / denom;
-    if (normalized < 0.0f) {
-        return 0.0f;
-    }
-
-    return normalized;
 }
 
 uint16_t clampEnvelope(long envelope) {
@@ -238,17 +202,12 @@ void calculateFeatures(float *features) {
         prevOutside = outside;
     }
 
-    float rawFeatures[RAW_FEATURE_COUNT];
-    rawFeatures[0] = sumInside / WINDOW_SIZE;
-    rawFeatures[1] = sumOutside / WINDOW_SIZE;
-    rawFeatures[2] = sqrt(squareSumInside / WINDOW_SIZE);
-    rawFeatures[3] = sqrt(squareSumOutside / WINDOW_SIZE);
-    rawFeatures[4] = wlInside;
-    rawFeatures[5] = wlOutside;
-
-    for (int i = 0; i < RAW_FEATURE_COUNT; i++) {
-        features[i] = normalizeFeature(rawFeatures[i], i);
-    }
+    features[0] = sumInside / WINDOW_SIZE;
+    features[1] = sumOutside / WINDOW_SIZE;
+    features[2] = sqrt(squareSumInside / WINDOW_SIZE);
+    features[3] = sqrt(squareSumOutside / WINDOW_SIZE);
+    features[4] = wlInside;
+    features[5] = wlOutside;
 
     features[6] = features[0] - features[1];
     features[7] = features[2] - features[3];
@@ -264,8 +223,12 @@ void calculateFeatures(float *features) {
 void setup() {
     filterInside.init(SAMPLE_RATE, HUM_FREQ, true, true, true);
     filterOutside.init(SAMPLE_RATE, HUM_FREQ, true, true, true);
-    fingerServo.attach(ServoPin);
-    fingerServo.write(90);
+    fingerServo1.attach(ServoPin1);
+    fingerServo2.attach(ServoPin2);
+    fingerServo3.attach(ServoPin3);
+    fingerServo1.write(90);
+    fingerServo2.write(90);
+    fingerServo3.write(90);
     lastServoAngle = 90;
 
     Serial.begin(115200);
