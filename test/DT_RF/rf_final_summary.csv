@@ -1,0 +1,17 @@
+﻿stride_ms,variant,accuracy_percent,balanced_accuracy_percent,macro_precision_percent,macro_recall_percent,macro_f1_percent,fit_seconds,prediction_microseconds_per_window,n_estimators,criterion,max_depth,max_features,min_samples_split,min_samples_leaf,bootstrap,class_weight
+50,DT reference,87.5000,87.3117,87.6993,87.3117,87.2911,0.006099,1.089732,,,,,,,,
+50,RF baseline,85.2679,85.0164,85.8627,85.0164,85.0765,0.589404,74.968303,300,gini,5,sqrt,2,1,True,
+50,RF stride-tuned,89.2857,89.1405,89.6669,89.1405,89.1747,2.104515,112.071429,500,gini,5,1.0,10,2,True,
+50,RF global-tuned,88.8393,88.6960,89.1314,88.6960,88.7415,0.458099,24.692857,100,gini,,1.0,2,1,True,balanced
+100,DT reference,92.0354,91.8972,92.3819,91.8972,91.9063,0.003039,1.599116,,,,,,,,
+100,RF baseline,82.3009,82.0553,83.6248,82.0553,81.8927,0.428773,136.065486,300,gini,5,sqrt,2,1,True,
+100,RF stride-tuned,89.3805,89.2490,89.5353,89.2490,89.2348,0.196640,48.372565,100,gini,,0.5,10,4,False,
+100,RF global-tuned,88.4956,88.3794,88.5304,88.3794,88.3762,0.271754,50.480531,100,gini,,1.0,2,1,True,balanced
+150,DT reference,82.8947,82.6667,84.5023,82.6667,82.4286,0.002350,1.918420,,,,,,,,
+150,RF baseline,84.2105,84.0000,84.2655,84.0000,83.9762,0.564234,252.623684,300,gini,5,sqrt,2,1,True,
+150,RF stride-tuned,89.4737,89.3333,89.4643,89.3333,89.3215,0.904254,349.981582,500,gini,12,log2,2,1,True,
+150,RF global-tuned,89.4737,89.3333,89.5023,89.3333,89.2857,0.203445,74.605264,100,gini,,1.0,2,1,True,balanced
+200,DT reference,89.4737,89.0909,91.7143,89.0909,89.0620,0.001886,2.931579,,,,,,,,
+200,RF baseline,80.7018,80.4545,83.2955,80.4545,79.9594,0.404677,259.624561,300,gini,5,sqrt,2,1,True,
+200,RF stride-tuned,87.7193,87.7273,87.8788,87.7273,87.7235,0.175768,76.489474,100,gini,,1.0,2,1,True,balanced
+200,RF global-tuned,87.7193,87.7273,87.8788,87.7273,87.7235,0.175189,91.685963,100,gini,,1.0,2,1,True,balanced

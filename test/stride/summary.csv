@@ -1,0 +1,5 @@
+﻿stride_ms,update_hz,overlap_ms,overlap_percent,train_windows,test_windows,accuracy_percent,macro_precision_percent,macro_recall_percent,macro_f1_percent,tree_depth,tree_leaves
+50,20.0000,150,75.0,662,224,87.5000,87.6993,87.3117,87.2911,5,14
+100,10.0000,100,50.0,331,113,92.0354,92.3819,91.8972,91.9063,5,14
+150,6.6667,50,25.0,220,76,82.8947,84.5023,82.6667,82.4286,5,9
+200,5.0000,0,0.0,167,57,89.4737,91.7143,89.0909,89.0620,5,9

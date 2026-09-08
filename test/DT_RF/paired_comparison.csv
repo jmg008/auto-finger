@@ -1,0 +1,5 @@
+﻿stride_ms,test_windows,both_correct,dt_only_correct,rf_only_correct,both_wrong,exact_mcnemar_p_value
+50,224,186,10,5,23,0.30175781
+100,113,92,12,1,8,0.00341797
+150,76,61,2,3,10,1.00000000
+200,57,46,5,0,6,0.06250000

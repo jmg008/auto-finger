@@ -1,10 +1,12 @@
 /*
- * EMG 3-class classifier serial output
+ * EMG 5-class classifier serial output
  *
  * Labels:
  *   0 = rock
  *   1 = paper
  *   2 = none
+ *   3 = middle
+ *   4 = thumb
  *
  * Feature order:
  *   x[0] = MAV_ch1
@@ -44,10 +46,11 @@ const int HUM_FREQ = NOTCH_FREQ_60HZ;
 
 const unsigned long SAMPLE_PERIOD_US = 1000000UL / 1000UL;
 const int WINDOW_SIZE = 200;
-const int STEP_SIZE = 50;
+const int STEP_SIZE = 100;
 const int FEATURE_COUNT = 15;
 const int VOTE_WINDOW_SIZE = 9;
 const int VOTE_MIN_COUNT = 5;
+const int LABEL_COUNT = 5;
 const float BALANCE_EPSILON = 0.001f;
 
 static long ThresholdInside = 0;
@@ -64,20 +67,61 @@ uint16_t windowOutside[WINDOW_SIZE];
 int windowIndex = 0;
 int samplesInWindow = 0;
 int samplesSincePredict = 0;
-int lastServoAngle = -1;
+int lastServoLabel = -1;
+int lastServoAngle = 90;
 int labelHistory[VOTE_WINDOW_SIZE];
 int labelHistoryIndex = 0;
 int labelsInHistory = 0;
 int stableLabel = 2;
 
 int predictEMG(float *x) {
-    if (x[11] <= 21837.5f) {
+    if (x[11] <= 2081.5f) {
         return 2;
     } else {
-        if (x[9] <= 733.2149963f) {
-            return 1;
+        if (x[12] <= 0.006119620055f) {
+            if (x[4] <= 19607.5f) {
+                if (x[6] <= -0.6599999964f) {
+                    if (x[11] <= 8782.0f) {
+                        return 0;
+                    } else {
+                        return 4;
+                    }
+                } else {
+                    if (x[2] <= 67.77761078f) {
+                        return 4;
+                    } else {
+                        return 0;
+                    }
+                }
+            } else {
+                if (x[12] <= -0.01477864059f) {
+                    if (x[1] <= 123.8025017f) {
+                        return 4;
+                    } else {
+                        return 0;
+                    }
+                } else {
+                    return 0;
+                }
+            }
         } else {
-            return 0;
+            if (x[6] <= 7.277499914f) {
+                if (x[2] <= 80.17727661f) {
+                    if (x[1] <= 32.24500084f) {
+                        return 1;
+                    } else {
+                        return 1;
+                    }
+                } else {
+                    if (x[12] <= 0.01409404585f) {
+                        return 3;
+                    } else {
+                        return 3;
+                    }
+                }
+            } else {
+                return 1;
+            }
         }
     }
 }
@@ -90,33 +134,63 @@ const char *labelName(int label) {
             return "paper";
         case 2:
             return "none";
+        case 3:
+            return "middle";
+        case 4:
+            return "thumb";
         default:
             return "unknown";
     }
 }
 
-int servoAngleForLabel(int label) {
+void servoAnglesForLabel(int label, int &angle1, int &angle2, int &angle3) {
     switch (label) {
         case 0:
-            return 180;
+            angle1 = 180;
+            angle2 = 0;
+            angle3 = 180;
+            break;
         case 1:
-            return 0;
+            angle1 = 0;
+            angle2 = 180;
+            angle3 = 0;
+            break;
         case 2:
-            return 90;
+            angle1 = 90;
+            angle2 = 90;
+            angle3 = 90;
+            break;
+        case 3:  // middle
+            angle1 = 0;
+            angle2 = 180;
+            angle3 = 0;
+            break;
+        case 4:  // thumb
+            angle1 = 0;
+            angle2 = 0;
+            angle3 = 180;
+            break;
         default:
-            return 90;
+            angle1 = 90;
+            angle2 = 90;
+            angle3 = 90;
+            break;
     }
 }
 
 void updateServo(int label) {
-    int angle = servoAngleForLabel(label);
-
-    if (angle != lastServoAngle) {
-        fingerServo1.write(angle);
-        fingerServo2.write(180-angle);
-        fingerServo3.write(angle);
-        lastServoAngle = angle;
+    if (label == lastServoLabel) {
+        return;
     }
+
+    int angle1;
+    int angle2;
+    int angle3;
+    servoAnglesForLabel(label, angle1, angle2, angle3);
+    fingerServo1.write(angle1);
+    fingerServo2.write(angle2);
+    fingerServo3.write(angle3);
+    lastServoLabel = label;
 }
 
 int smoothLabel(int label) {
@@ -127,17 +201,17 @@ int smoothLabel(int label) {
         labelsInHistory++;
     }
 
-    int counts[3] = {0, 0, 0};
+    int counts[LABEL_COUNT] = {0};
     for (int i = 0; i < labelsInHistory; i++) {
         int historyLabel = labelHistory[i];
-        if (historyLabel >= 0 && historyLabel <= 2) {
+        if (historyLabel >= 0 && historyLabel < LABEL_COUNT) {
             counts[historyLabel]++;
         }
     }
 
     int bestLabel = stableLabel;
     int bestCount = counts[stableLabel];
-    for (int candidate = 0; candidate < 3; candidate++) {
+    for (int candidate = 0; candidate < LABEL_COUNT; candidate++) {
         if (counts[candidate] > bestCount) {
             bestLabel = candidate;
             bestCount = counts[candidate];
@@ -229,7 +303,6 @@ void setup() {
     fingerServo1.write(90);
     fingerServo2.write(90);
     fingerServo3.write(90);
-    lastServoAngle = 90;
 
     Serial.begin(115200);
 }

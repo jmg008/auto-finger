@@ -10,17 +10,19 @@ COLLECT_ORDER = [
     ("none", "none.txt"),
     ("rock", "rock.txt"),
     ("paper", "paper.txt"),
+    ("middle", "middle.txt"),
+    ("thumb", "thumb.txt"),
 ]
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Collect EMG serial data for none, rock, and paper classes."
+        description="Collect EMG serial data for all posture classes."
     )
     parser.add_argument("--port", default="COM15", help="Serial port, for example COM15")
     parser.add_argument("--baud", type=int, default=115200)
     parser.add_argument("--seconds", type=float, default=8.0, help="Seconds to collect per class")
-    parser.add_argument("--sets", type=int, default=1, help="Number of none/rock/paper collection sets")
+    parser.add_argument("--sets", type=int, default=1, help="Number of posture collection sets")
     parser.add_argument("--settle", type=float, default=2.0, help="Seconds to wait before recording")
     parser.add_argument("--arduino-cli", default="arduino-cli", help="Path to arduino-cli executable")
     parser.add_argument("--fqbn", default="arduino:avr:uno", help="Arduino board FQBN")

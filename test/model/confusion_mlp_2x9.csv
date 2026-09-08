@@ -1,0 +1,6 @@
+﻿actual\predicted,rock,paper,none,middle,thumb
+rock,15,0,0,0,7
+paper,1,19,0,0,2
+none,0,0,24,0,0
+middle,0,1,0,21,0
+thumb,5,0,0,0,18

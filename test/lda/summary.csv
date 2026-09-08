@@ -1,0 +1,3 @@
+﻿model,accuracy_percent,macro_precision_percent,macro_recall_percent,macro_f1_percent
+dt,92.0354,92.3819,91.8972,91.9063
+lda,81.4159,86.0513,81.3669,81.5576

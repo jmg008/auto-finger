@@ -11,7 +11,7 @@ import numpy as np
 
 SAMPLE_RATE_HZ = 1000
 WINDOW_MS = 200
-STEP_MS = 50
+STEP_MS = 100
 RAW_FEATURE_COUNT = 6
 BALANCE_EPSILON = 0.001
 
@@ -19,12 +19,16 @@ CLASSES = [
     ("rock", "rock.txt", 0),
     ("paper", "paper.txt", 1),
     ("none", "none.txt", 2),
+    ("middle", "middle.txt", 3),
+    ("thumb", "thumb.txt", 4),
 ]
 
 LABEL_NAMES = {
     0: "rock",
     1: "paper",
     2: "none",
+    3: "middle",
+    4: "thumb",
 }
 
 CLASS_LABELS = sorted(LABEL_NAMES)
@@ -85,6 +89,8 @@ COLLECT_ORDER = [
     ("none", "none.txt", 2),
     ("rock", "rock.txt", 0),
     ("paper", "paper.txt", 1),
+    ("middle", "middle.txt", 3),
+    ("thumb", "thumb.txt", 4),
 ]
 
 
@@ -95,9 +101,9 @@ def build_arg_parser():
     parser.add_argument("--port", default="COM15", help="Serial port, for example COM15")
     parser.add_argument("--baud", type=int, default=115200)
     parser.add_argument("--seconds", type=float, default=8.0, help="Seconds to collect per class")
-    parser.add_argument("--sets", type=int, default=1, help="Number of none/rock/paper collection sets")
+    parser.add_argument("--sets", type=int, default=1, help="Number of posture collection sets")
     parser.add_argument("--settle", type=float, default=2.0, help="Seconds to wait before recording")
-    parser.add_argument("--skip-collect", action="store_true", help="Use existing rock/paper/none txt files")
+    parser.add_argument("--skip-collect", action="store_true", help="Use existing posture txt files")
     parser.add_argument("--max-depth", type=int, default=5)
     parser.add_argument("--split-mode", choices=("sequential", "random"), default="sequential")
     parser.add_argument("--random-state", type=int, default=42)
@@ -693,7 +699,7 @@ def run_pipeline(args, before_collect=None):
 
     print("\nDone.")
     print("Feature order:", feature_names_text)
-    print("Labels: 0=rock, 1=paper, 2=none")
+    print("Labels:", ", ".join(f"{label}={LABEL_NAMES[label]}" for label in CLASS_LABELS))
 
 
 def main():

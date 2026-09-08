@@ -6,7 +6,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 SAMPLE_RATE_HZ = 1000
 WINDOW_MS = 200
-STEP_MS = 50
+STEP_MS = 100
 
 WINDOW_SIZE = SAMPLE_RATE_HZ * WINDOW_MS // 1000
 STEP_SIZE = SAMPLE_RATE_HZ * STEP_MS // 1000
@@ -15,11 +15,15 @@ BALANCE_EPSILON = 0.001
 ROCK_LABEL = 0   # jwieot-eul ttae
 PAPER_LABEL = 1  # pyeot-eul ttae
 NONE_LABEL = 2   # him an jun jungnip sangtae
+MIDDLE_LABEL = 3
+THUMB_LABEL = 4
 
 CLASSES = [
     ("rock", "rock.txt", ROCK_LABEL),
     ("paper", "paper.txt", PAPER_LABEL),
     ("none", "none.txt", NONE_LABEL),
+    ("middle", "middle.txt", MIDDLE_LABEL),
+    ("thumb", "thumb.txt", THUMB_LABEL),
 ]
 
 

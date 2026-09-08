@@ -1,0 +1,420 @@
+{
+  "metadata": {
+    "python_version": "3.10.11",
+    "numpy_version": "1.26.2",
+    "sklearn_version": "1.7.2",
+    "sample_rate_hz": 1000,
+    "window_ms": 200,
+    "window_samples": 200,
+    "stride_ms": 100,
+    "stride_samples": 100,
+    "train_ratio": 0.75,
+    "split_mode": "sequential_by_class_after_windowing",
+    "class_order": [
+      "rock",
+      "paper",
+      "none",
+      "middle",
+      "thumb"
+    ],
+    "class_labels": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "source_rows": {
+      "rock": 8854,
+      "paper": 8851,
+      "none": 9612,
+      "middle": 8670,
+      "thumb": 9127
+    },
+    "split_counts": {
+      "rock": {
+        "total": 87,
+        "train": 65,
+        "test": 22,
+        "first_train_window": 0,
+        "last_train_window": 64,
+        "first_test_window": 65,
+        "last_test_window": 86
+      },
+      "paper": {
+        "total": 87,
+        "train": 65,
+        "test": 22,
+        "first_train_window": 0,
+        "last_train_window": 64,
+        "first_test_window": 65,
+        "last_test_window": 86
+      },
+      "none": {
+        "total": 95,
+        "train": 71,
+        "test": 24,
+        "first_train_window": 0,
+        "last_train_window": 70,
+        "first_test_window": 71,
+        "last_test_window": 94
+      },
+      "middle": {
+        "total": 85,
+        "train": 63,
+        "test": 22,
+        "first_train_window": 0,
+        "last_train_window": 62,
+        "first_test_window": 63,
+        "last_test_window": 84
+      },
+      "thumb": {
+        "total": 90,
+        "train": 67,
+        "test": 23,
+        "first_train_window": 0,
+        "last_train_window": 66,
+        "first_test_window": 67,
+        "last_test_window": 89
+      }
+    },
+    "feature_count": 15,
+    "feature_names": [
+      "MAV_ch1",
+      "MAV_ch2",
+      "RMS_ch1",
+      "RMS_ch2",
+      "WL_ch1",
+      "WL_ch2",
+      "MAV_diff",
+      "RMS_diff",
+      "WL_diff",
+      "MAV_sum",
+      "RMS_sum",
+      "WL_sum",
+      "MAV_balance",
+      "RMS_balance",
+      "WL_balance"
+    ],
+    "total_windows": 444,
+    "train_windows": 331,
+    "test_windows": 113,
+    "test_global_indices": [
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      152,
+      153,
+      154,
+      155,
+      156,
+      157,
+      158,
+      159,
+      160,
+      161,
+      162,
+      163,
+      164,
+      165,
+      166,
+      167,
+      168,
+      169,
+      170,
+      171,
+      172,
+      173,
+      245,
+      246,
+      247,
+      248,
+      249,
+      250,
+      251,
+      252,
+      253,
+      254,
+      255,
+      256,
+      257,
+      258,
+      259,
+      260,
+      261,
+      262,
+      263,
+      264,
+      265,
+      266,
+      267,
+      268,
+      332,
+      333,
+      334,
+      335,
+      336,
+      337,
+      338,
+      339,
+      340,
+      341,
+      342,
+      343,
+      344,
+      345,
+      346,
+      347,
+      348,
+      349,
+      350,
+      351,
+      352,
+      353,
+      421,
+      422,
+      423,
+      424,
+      425,
+      426,
+      427,
+      428,
+      429,
+      430,
+      431,
+      432,
+      433,
+      434,
+      435,
+      436,
+      437,
+      438,
+      439,
+      440,
+      441,
+      442,
+      443
+    ]
+  },
+  "results": {
+    "dt": {
+      "accuracy": 0.9203539823008849,
+      "macro_precision": 0.9238191632928474,
+      "macro_recall": 0.9189723320158102,
+      "macro_f1": 0.9190627682674342,
+      "classification_report": {
+        "rock": {
+          "precision": 0.8947368421052632,
+          "recall": 0.7727272727272727,
+          "f1-score": 0.8292682926829268,
+          "support": 22.0
+        },
+        "paper": {
+          "precision": 0.9166666666666666,
+          "recall": 1.0,
+          "f1-score": 0.9565217391304348,
+          "support": 22.0
+        },
+        "none": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 24.0
+        },
+        "middle": {
+          "precision": 1.0,
+          "recall": 0.9090909090909091,
+          "f1-score": 0.9523809523809523,
+          "support": 22.0
+        },
+        "thumb": {
+          "precision": 0.8076923076923077,
+          "recall": 0.9130434782608695,
+          "f1-score": 0.8571428571428571,
+          "support": 23.0
+        },
+        "accuracy": 0.9203539823008849,
+        "macro avg": {
+          "precision": 0.9238191632928474,
+          "recall": 0.9189723320158102,
+          "f1-score": 0.9190627682674342,
+          "support": 113.0
+        },
+        "weighted avg": {
+          "precision": 0.9241398253973941,
+          "recall": 0.9203539823008849,
+          "f1-score": 0.91994732182797,
+          "support": 113.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          17,
+          0,
+          0,
+          0,
+          5
+        ],
+        [
+          0,
+          22,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          24,
+          0,
+          0
+        ],
+        [
+          0,
+          2,
+          0,
+          20,
+          0
+        ],
+        [
+          2,
+          0,
+          0,
+          0,
+          21
+        ]
+      ],
+      "model_details": {
+        "parameters": "DecisionTreeClassifier(max_depth=5, random_state=42)",
+        "depth": 5,
+        "leaves": 14,
+        "nodes": 27
+      }
+    },
+    "lda": {
+      "accuracy": 0.8141592920353983,
+      "macro_precision": 0.8605128205128205,
+      "macro_recall": 0.8136693017127798,
+      "macro_f1": 0.8155763445593955,
+      "classification_report": {
+        "rock": {
+          "precision": 0.9230769230769231,
+          "recall": 0.5454545454545454,
+          "f1-score": 0.6857142857142857,
+          "support": 22.0
+        },
+        "paper": {
+          "precision": 0.8461538461538461,
+          "recall": 1.0,
+          "f1-score": 0.9166666666666666,
+          "support": 22.0
+        },
+        "none": {
+          "precision": 0.95,
+          "recall": 0.7916666666666666,
+          "f1-score": 0.8636363636363636,
+          "support": 24.0
+        },
+        "middle": {
+          "precision": 1.0,
+          "recall": 0.8181818181818182,
+          "f1-score": 0.9,
+          "support": 22.0
+        },
+        "thumb": {
+          "precision": 0.5833333333333334,
+          "recall": 0.9130434782608695,
+          "f1-score": 0.711864406779661,
+          "support": 23.0
+        },
+        "accuracy": 0.8141592920353983,
+        "macro avg": {
+          "precision": 0.8605128205128205,
+          "recall": 0.8136693017127798,
+          "f1-score": 0.8155763445593955,
+          "support": 113.0
+        },
+        "weighted avg": {
+          "precision": 0.8596437485818017,
+          "recall": 0.8141592920353983,
+          "f1-score": 0.8155091596069547,
+          "support": 113.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          12,
+          0,
+          0,
+          0,
+          10
+        ],
+        [
+          0,
+          22,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          19,
+          0,
+          5
+        ],
+        [
+          0,
+          4,
+          0,
+          18,
+          0
+        ],
+        [
+          1,
+          0,
+          1,
+          0,
+          21
+        ]
+      ],
+      "model_details": {
+        "parameters": "LinearDiscriminantAnalysis(solver=\"svd\")",
+        "classes": 5,
+        "discriminant_components": 4,
+        "explained_variance_ratio": [
+          0.6720047210533345,
+          0.23432844963011276,
+          0.08476473889908698,
+          0.008902090417465779
+        ]
+      }
+    }
+  },
+  "paired_comparison": {
+    "both_correct": 90,
+    "dt_only_correct": 14,
+    "lda_only_correct": 2,
+    "both_wrong": 7,
+    "exact_mcnemar_p_value": 0.004180908203125
+  }
+}
